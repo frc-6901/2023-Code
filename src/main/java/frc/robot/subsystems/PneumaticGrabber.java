@@ -16,36 +16,30 @@ import frc.robot.Constants.GrabberConstants;
 
 public class PneumaticGrabber extends SubsystemBase {
 
-  private final DoubleSolenoid m_grabberSolenoid =
+  private final DoubleSolenoid m_leftGrabberSolenoid =
   new DoubleSolenoid(
       PneumaticsModuleType.CTREPCM,
       GrabberConstants.kGrabberSolenoidPorts[0],
       GrabberConstants.kGrabberSolenoidPorts[1]);
 
+  private final DoubleSolenoid m_rightGrabberSolenoid =
+  new DoubleSolenoid(
+      PneumaticsModuleType.CTREPCM,
+      GrabberConstants.kGrabberSolenoidPorts[2],
+      GrabberConstants.kGrabberSolenoidPorts[3]);
+
   /** Creates a new PneumaticGrabber. */
   public PneumaticGrabber() {
-    m_grabberSolenoid.set(kOff);
-  }
-
-  /**
-   * Example command factory method.
-   *
-   * @return a command
-   */
-  public CommandBase exampleMethodCommand() {
-    // Inline construction of command goes here.
-    // Subsystem::RunOnce implicitly requires `this` subsystem.
-    return runOnce(
-        () -> {
-          /* one-time action goes here */
-        });
+    m_leftGrabberSolenoid.set(kOff);
+    m_rightGrabberSolenoid.set(kOff);
   }
 
   // Open grabber
   public CommandBase openGrabber() {
     return runOnce(
         () -> {
-          m_grabberSolenoid.set(kForward);
+          m_leftGrabberSolenoid.set(kReverse);
+          m_rightGrabberSolenoid.set(kReverse);
         });
   }
 
@@ -53,7 +47,8 @@ public class PneumaticGrabber extends SubsystemBase {
   public CommandBase closeGrabber() {
     return runOnce(
         () -> {
-          m_grabberSolenoid.set(kReverse);
+          m_leftGrabberSolenoid.set(kForward);
+          m_rightGrabberSolenoid.set(kForward);
         });
   }
 

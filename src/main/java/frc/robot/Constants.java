@@ -19,7 +19,7 @@ public final class Constants {
   }
 
   public static final class GrabberConstants {
-    public static final int kGrabberSolenoidPorts[] = {4, 5};
+    public static final int kGrabberSolenoidPorts[] = {4, 5, 6, 7};
     public static final int kIntakeVoltage = 6;
   }
 }
