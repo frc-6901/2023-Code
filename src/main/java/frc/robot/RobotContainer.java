@@ -5,11 +5,14 @@
 package frc.robot;
 
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.Constants.DrivetrainConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.ExampleCommand;
+import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.ExampleSubsystem;
 import frc.robot.subsystems.PneumaticGrabber;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -25,12 +28,23 @@ public class RobotContainer {
 
   private final PneumaticGrabber m_pneumaticGrabber = new PneumaticGrabber();
 
+  private final Drivetrain m_drivetrain = new Drivetrain();
+
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_operatorController =
       new CommandXboxController(ControllerConstants.kOperatorPort);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+    m_drivetrain.setDefaultCommand(
+      new RunCommand(
+          () -> {
+            m_drivetrain.drive(
+                -DrivetrainConstants.kDriveForwardMultiplier * m_operatorController.getLeftY(),
+                DrivetrainConstants.kDriveTurnMultiplier * m_operatorController.getRightX());
+          },
+          m_drivetrain));
+
     // Configure the trigger bindings
     configureBindings();
   }
