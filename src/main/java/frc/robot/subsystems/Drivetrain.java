@@ -110,7 +110,7 @@ public class Drivetrain extends SubsystemBase {
 
     m_leftSRX.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 10);
     m_rightSRX.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 10);
-
+    
     m_leftSRX.setSensorPhase(true);
     m_rightSRX.setSensorPhase(true);
 
@@ -145,11 +145,11 @@ public class Drivetrain extends SubsystemBase {
     m_trajectoryConfig.setKinematics(DrivetrainConstants.kDriveKinematics);
     m_trajectoryConfig.addConstraint(voltageConstraint);
 
-    resetOdo();
+    //resetOdo();
     SmartDashboard.putData("Field", m_field);
   }
 
-  /**
+  /*
    * Drives the robot in an arcade drive
    *
    * @param forward Forward value as a percent output: [-1, 1]
@@ -279,7 +279,7 @@ public class Drivetrain extends SubsystemBase {
                 DrivetrainConstants.kWheelCircumferenceMeters),
             MagEncoderUtil.nativeUnitsToDistance(
                 m_rightSRX.getSelectedSensorPosition(),
-                DrivetrainConstants.kWheelCircumferenceMeters));*/
+                DrivetrainConstants.kWheelCircumferenceMeters));
 
     SmartDashboard.putNumber("Left Leader Voltage", m_leftSRX.getMotorOutputVoltage());
     SmartDashboard.putNumber("Left Follower Voltage", m_leftSPX.getMotorOutputVoltage());
@@ -289,7 +289,7 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putNumber("Left Encoder Values", getWheelSpeeds().leftMetersPerSecond);
     SmartDashboard.putNumber("Right Encoder Values", getWheelSpeeds().rightMetersPerSecond);
     SmartDashboard.putNumber("Left Vel Setpoint", m_leftController.getSetpoint());
-    SmartDashboard.putNumber("Right Vel Setpoint", m_rightController.getSetpoint());
+    SmartDashboard.putNumber("Right Vel Setpoint", m_rightController.getSetpoint());*/
     /*SmartDashboard.putNumber(
         "Left Velocity",
         MagEncoderUtil.nativeUnitsToVelocity(
@@ -305,13 +305,13 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putNumber(
         "Right Encoder Distance",
         MagEncoderUtil.nativeUnitsToDistance(
-            m_rightSRX.getSelectedSensorPosition(), DrivetrainConstants.kWheelCircumferenceMeters));*/
+            m_rightSRX.getSelectedSensorPosition(), DrivetrainConstants.kWheelCircumferenceMeters));
     SmartDashboard.putNumber("Left Encoder Distance Raw", m_leftSRX.getSelectedSensorPosition());
     SmartDashboard.putNumber("Right Encoder Distance Raw", m_rightSRX.getSelectedSensorPosition());
 
     SmartDashboard.putNumber("X ", m_odometry.getPoseMeters().getX());
     SmartDashboard.putNumber("Y ", m_odometry.getPoseMeters().getY());
     SmartDashboard.putNumber("Rot ", m_odometry.getPoseMeters().getRotation().getDegrees());
-    m_field.setRobotPose(m_odometry.getPoseMeters());
+    m_field.setRobotPose(m_odometry.getPoseMeters());*/
   }
 }

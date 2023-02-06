@@ -30,6 +30,8 @@ public class RobotContainer {
 
   private final Drivetrain m_drivetrain = new Drivetrain();
 
+  private final Arm m_arm = new Arm();
+
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_operatorController =
       new CommandXboxController(ControllerConstants.kOperatorPort);
@@ -41,9 +43,16 @@ public class RobotContainer {
           () -> {
             m_drivetrain.drive(
                 -DrivetrainConstants.kDriveForwardMultiplier * m_operatorController.getLeftY(),
-                DrivetrainConstants.kDriveTurnMultiplier * m_operatorController.getRightX());
+                DrivetrainConstants.kDriveTurnMultiplier * m_operatorController.getLeftX());
           },
           m_drivetrain));
+
+    m_arm.setDefaultCommand(
+      new RunCommand(
+          () -> {
+            m_arm.setVoltage(10 * m_operatorController.getRightY());
+          },
+          m_arm));
 
     // Configure the trigger bindings
     configureBindings();

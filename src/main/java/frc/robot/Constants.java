@@ -21,16 +21,34 @@ public final class Constants {
     public static final int kOperatorPort = 1;
   }
 
+  public static final class ArmConstants {
+    public static final int kArmMotorLeaderPort = 41;
+    public static final int kArmMotorFollowerPort = 2;
+    public static final double kShooterFenderRPM = 1500;
+    public static final double kShooterRPMThreshold = 50;
+    public static final double kPower = 0.6;
+    public static final double kS = 0.39592;
+    public static final double kV = 0.15034;
+    public static final double kA = 0.0099325;
+    public static final double kP = 0.0001;
+    public static final double kD = 0.5;
+    public static final double kFF = 0; 
+    public static final double kMaxOutput = 1; 
+    public static final double kMinOutput = -1;
+
+    public static final double kRampUpTimeoutSeconds = 2.5;
+  }
+
   public static final class GrabberConstants {
     public static final int kGrabberSolenoidPorts[] = {4, 5, 6, 7};
     public static final int kIntakeVoltage = 6;
   }
 
   public static final class DrivetrainConstants {
-    public static final int kLeftSRXDrivePort = 1;
-    public static final int kLeftSPXDrivePort = 2;
-    public static final int kRightSRXDrivePort = 3;
-    public static final int kRightSPXDrivePort = 4;
+    public static final int kLeftSRXDrivePort = 51;
+    public static final int kLeftSPXDrivePort = 02;
+    public static final int kRightSRXDrivePort = 20;
+    public static final int kRightSPXDrivePort = 21;
 
     public static final double kDriveForwardMultiplier = 1;
     public static final double kDriveTurnMultiplier = 1;
