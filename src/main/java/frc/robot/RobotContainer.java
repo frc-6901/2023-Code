@@ -4,10 +4,12 @@
 
 package frc.robot;
 
+import frc.robot.Constants.ArmConstants;
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.Constants.DrivetrainConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.ExampleCommand;
+import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.ExampleSubsystem;
 import frc.robot.subsystems.PneumaticGrabber;
@@ -33,6 +35,9 @@ public class RobotContainer {
   private final Arm m_arm = new Arm();
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
+  private final CommandXboxController m_navigatorController =
+      new CommandXboxController(ControllerConstants.kOperatorPort);
+
   private final CommandXboxController m_operatorController =
       new CommandXboxController(ControllerConstants.kOperatorPort);
 
@@ -42,17 +47,17 @@ public class RobotContainer {
       new RunCommand(
           () -> {
             m_drivetrain.drive(
-                -DrivetrainConstants.kDriveForwardMultiplier * m_operatorController.getLeftY(),
-                DrivetrainConstants.kDriveTurnMultiplier * m_operatorController.getLeftX());
+                -DrivetrainConstants.kDriveForwardMultiplier * m_navigatorController.getLeftY(),
+                DrivetrainConstants.kDriveTurnMultiplier * m_navigatorController.getLeftX());
           },
           m_drivetrain));
 
-    m_arm.setDefaultCommand(
+    /*m_arm.setDefaultCommand(
       new RunCommand(
           () -> {
-            m_arm.setVoltage(10 * m_operatorController.getRightY());
+            m_arm.setVoltage(6 * m_operatorController.getRightY());
           },
-          m_arm));
+          m_arm));*/
 
     // Configure the trigger bindings
     configureBindings();
@@ -74,8 +79,11 @@ public class RobotContainer {
 
     // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,
     // cancelling on release.
-    m_operatorController.y().onTrue(m_pneumaticGrabber.openGrabber());
-    m_operatorController.a().onTrue(m_pneumaticGrabber.closeGrabber());
+    m_operatorController.a().onTrue(m_arm.setPosition(ArmConstants.position[0]));
+    m_operatorController.b().onTrue(m_arm.setPosition(ArmConstants.position[1]));
+    m_operatorController.y().onTrue(m_arm.setPosition(ArmConstants.position[2]));
+    m_operatorController.leftBumper().onTrue(m_pneumaticGrabber.openGrabber());
+    m_operatorController.rightBumper().onTrue(m_pneumaticGrabber.closeGrabber());
   }
 
   /** 
