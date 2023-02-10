@@ -2,15 +2,15 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot;
+package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.CANSparkMax.IdleMode;
-import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ArmConstants;
 
@@ -34,11 +34,13 @@ public class Arm extends SubsystemBase {
   public double kMaxOutput = 1;
   public double kMinOutput = -1;
 
-  public enum Position {
+  /*public enum Position {
     GROUND, LOW, HIGH;
   }
 
-  private Position m_position = Position.GROUND;
+  private Position m_position = Position.GROUND;*/
+
+  private double m_position = 0.0;
 
   /** Creates a new Arm */
   public Arm() {
@@ -61,6 +63,7 @@ public class Arm extends SubsystemBase {
     SmartDashboard.putNumber("Feed Forward", kFF);
     SmartDashboard.putNumber("Max Output", kMaxOutput);
     SmartDashboard.putNumber("Min Output", kMinOutput);
+    SmartDashboard.putNumber("Arm Angle", 0);
     SmartDashboard.putNumber("Set Rotations", 0);
   }
 
@@ -72,7 +75,17 @@ public class Arm extends SubsystemBase {
     double ff = SmartDashboard.getNumber("Feed Forward", 0);
     double max = SmartDashboard.getNumber("Max Output", 0);
     double min = SmartDashboard.getNumber("Min Output", 0);
+    double armAngle = SmartDashboard.getNumber("Arm Angle", 0);
     double rotations = SmartDashboard.getNumber("Set Rotations", 0);
+
+    // Get desired armAngle. If not == to arm angle, rotate arm difference in degreees # of rotations
+    // position = 0, 1, or 2
+    // Each unit is 27 degrees
+    // Each rotation is 9 degrees
+    // A one unit difference in position will be 3 rotations
+    // (Desired position - actual position) * 3 rotations = # of rotations
+    rotations = (m_position - (armAngle / 27)) * 3;
+    SmartDashboard.putNumber("Arm Angle", m_position * 27);
 
     // if PID coefficients on SmartDashboard have changed, write new values to controller
     if((p != kP)) { m_armController.setP(p); kP = p; }
@@ -82,15 +95,23 @@ public class Arm extends SubsystemBase {
       m_armController.setOutputRange(min, max); 
       kMinOutput = min; kMaxOutput = max;
     }
+
+    m_armController.setReference(rotations, CANSparkMax.ControlType.kPosition);
+    
+    SmartDashboard.putNumber("SetPoint", rotations);
+    SmartDashboard.putNumber("ProcessVariable", m_encoder.getPosition());
   }
 
-  public void setPosition(Position m_position) {
-    this.m_position = m_position;
+  public CommandBase setPosition(double m_position) {
+    return runOnce(
+        () -> {
+          this.m_position = m_position;
+        });
   }
 
-  public void setVoltage(Double voltage) {
+  /*public void setVoltage(Double voltage) {
     m_armMotorLeader.setVoltage(voltage);
-  }
+  }*/
 
   @Override
   public void simulationPeriodic() {

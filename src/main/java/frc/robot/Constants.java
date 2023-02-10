@@ -24,19 +24,14 @@ public final class Constants {
   public static final class ArmConstants {
     public static final int kArmMotorLeaderPort = 41;
     public static final int kArmMotorFollowerPort = 2;
-    public static final double kShooterFenderRPM = 1500;
-    public static final double kShooterRPMThreshold = 50;
     public static final double kPower = 0.6;
-    public static final double kS = 0.39592;
-    public static final double kV = 0.15034;
-    public static final double kA = 0.0099325;
     public static final double kP = 0.0001;
     public static final double kD = 0.5;
     public static final double kFF = 0; 
     public static final double kMaxOutput = 1; 
     public static final double kMinOutput = -1;
 
-    public static final double kRampUpTimeoutSeconds = 2.5;
+    public static final int[] position = {0, 1, 2};
   }
 
   public static final class GrabberConstants {
