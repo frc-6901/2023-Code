@@ -109,9 +109,9 @@ public class Arm extends SubsystemBase {
         });
   }
 
-  public void setVoltage(Double voltage) {
+  /*public void setVoltage(Double voltage) {
     m_armMotorLeader.setVoltage(voltage);
-  }
+  }*/
 
   @Override
   public void simulationPeriodic() {
