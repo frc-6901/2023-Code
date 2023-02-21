@@ -84,8 +84,8 @@ public class Arm extends SubsystemBase {
     // Each rotation is 9 degrees
     // A one unit difference in position will be 3 rotations
     // (Desired position - actual position) * 3 rotations = # of rotations
-    rotations = (m_position - (armAngle / 27)) * 3;
-    SmartDashboard.putNumber("Arm Angle", m_position * 27);
+    rotations = (m_position - (armAngle / 216)) * 18;
+    SmartDashboard.putNumber("Arm Angle", m_position * 216);
 
     // if PID coefficients on SmartDashboard have changed, write new values to controller
     if((p != kP)) { m_armController.setP(p); kP = p; }

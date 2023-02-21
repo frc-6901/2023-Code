@@ -19,6 +19,8 @@ public class ExampleCommand extends CommandBase {
    */
   public ExampleCommand(ExampleSubsystem subsystem) {
     m_subsystem = subsystem;
+    m_subsystem.equals(subsystem);
+    
     // Use addRequirements() here to declare subsystem dependencies.
     addRequirements(subsystem);
   }
