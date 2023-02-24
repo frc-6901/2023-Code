@@ -52,7 +52,7 @@ public class RobotContainer {
 
   // private final Drivetrain m_drivetrain = new Drivetrain();
 
-  private final Arm m_arm = new Arm();
+  // private final Arm m_arm = new Arm();
 
   //private final LimelightManager m_limelight = new LimelightManager();
 
@@ -65,6 +65,8 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+
+    m_robotDrive.setDefaultCommand(
     // The left stick controls translation of the robot.
         // Turning is controlled by the X axis of the right stick.
         new RunCommand(
@@ -72,8 +74,8 @@ public class RobotContainer {
                 -MathUtil.applyDeadband(m_navigatorController.getLeftY(), ControllerConstants.kDriveDeadband),
                 -MathUtil.applyDeadband(m_navigatorController.getLeftX(), ControllerConstants.kDriveDeadband),
                 -MathUtil.applyDeadband(m_navigatorController.getRightX(), ControllerConstants.kDriveDeadband),
-                true, true),
-            m_robotDrive);
+                false, false),
+            m_robotDrive));
 
     /*m_drivetrain.setDefaultCommand(
       new RunCommand(
@@ -111,13 +113,14 @@ public class RobotContainer {
 
     // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,
     // cancelling on release.
-    m_operatorController.a().onTrue(m_arm.setPosition(ArmConstants.position[0]));
+    /*m_operatorController.a().onTrue(m_arm.setPosition(ArmConstants.position[0]));
     m_operatorController.b().onTrue(m_arm.setPosition(ArmConstants.position[1]));
-    m_operatorController.y().onTrue(m_arm.setPosition(ArmConstants.position[2]));
+    m_operatorController.y().onTrue(m_arm.setPosition(ArmConstants.position[2]));*/
     /*m_operatorController.x().whileTrue(new LimelightAim(m_limelight, m_robotDrive));*/
     
     m_operatorController.leftBumper().onTrue(m_pneumaticGrabber.openGrabber());
     m_operatorController.rightBumper().onTrue(m_pneumaticGrabber.closeGrabber());
+    m_navigatorController.x().onTrue(m_robotDrive.setX());
   }
 
   /** 
