@@ -4,11 +4,15 @@
 
 package frc.robot.subsystems;
 
+import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.CANSparkMax.IdleMode;
+
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -21,8 +25,12 @@ public class Arm extends SubsystemBase {
   private CANSparkMax m_armMotorFollower =
       new CANSparkMax(ArmConstants.kArmMotorFollowerPort, MotorType.kBrushless);
 
+  private WPI_TalonSRX m_spoolMotor = new WPI_TalonSRX(0);
+
   // Spark Max PID Controller Object
   private SparkMaxPIDController m_armController = m_armMotorLeader.getPIDController();
+
+  private PIDController m_spoolMotorController = new PIDController(.05, 0, 0);
 
   // Spark Max Relative Encoder Object
   private RelativeEncoder m_encoder = m_armMotorLeader.getEncoder();
@@ -34,13 +42,13 @@ public class Arm extends SubsystemBase {
   public double kMaxOutput = 1;
   public double kMinOutput = -1;
 
-  /*public enum Position {
-    GROUND, LOW, HIGH;
+  private double m_desiredAngle = 0.0;
+
+  public enum armState {
+    START, INTAKE, LOW, MID, HIGH
   }
 
-  private Position m_position = Position.GROUND;*/
-
-  private double m_position = 0.0;
+  private armState m_armState = armState.START;
 
   /** Creates a new Arm */
   public Arm() {
@@ -78,14 +86,36 @@ public class Arm extends SubsystemBase {
     double armAngle = SmartDashboard.getNumber("Arm Angle", 0);
     double rotations = SmartDashboard.getNumber("Set Rotations", 0);
 
-    // Get desired armAngle. If not == to arm angle, rotate arm difference in degreees # of rotations
-    // position = 0, 1, or 2
-    // Each unit is 27 degrees
-    // Each rotation is 9 degrees
-    // A one unit difference in position will be 3 rotations
-    // (Desired position - actual position) * 3 rotations = # of rotations
-    rotations = (m_position - (armAngle / 216)) * 18;
-    SmartDashboard.putNumber("Arm Angle", m_position * 216);
+    // Get desired arm angle
+    switch (m_armState) {
+      case START:
+        m_desiredAngle = 0;
+        m_spoolMotor.set(TalonSRXControlMode.Position, 1);
+        break;
+      case INTAKE:
+        m_desiredAngle = 25;
+        m_spoolMotor.set(TalonSRXControlMode.Position, 1);
+        break;
+      case LOW:
+        m_desiredAngle = 50;
+        m_spoolMotor.set(TalonSRXControlMode.Position, 1);
+        break;
+      case MID:
+        m_desiredAngle = 70;
+        m_spoolMotor.set(TalonSRXControlMode.Position, 1);
+        break;
+      case HIGH:
+        m_desiredAngle = 90;
+        m_spoolMotor.set(TalonSRXControlMode.Position, 1);
+        break;
+    }
+    
+    // Desired angle - current angle = difference in degrees
+    // degrees per rotation = 4.5
+    // rotations = difference / degrees per rotation
+    double degreesPerRotation = 360 / 80;
+    rotations = m_desiredAngle - armAngle / degreesPerRotation;
+    SmartDashboard.putNumber("Arm Angle", m_desiredAngle);
 
     // if PID coefficients on SmartDashboard have changed, write new values to controller
     if((p != kP)) { m_armController.setP(p); kP = p; }
@@ -102,16 +132,26 @@ public class Arm extends SubsystemBase {
     SmartDashboard.putNumber("ProcessVariable", m_encoder.getPosition());
   }
 
-  public CommandBase setPosition(double m_position) {
+  public CommandBase setAngle(double angle) {
     return runOnce(
         () -> {
-          this.m_position = m_position;
+          m_desiredAngle = angle;
         });
   }
 
-  /*public void setVoltage(Double voltage) {
-    m_armMotorLeader.setVoltage(voltage);
-  }*/
+  public CommandBase setSpoolVoltage(double voltage) {
+    return runOnce(
+        () -> {
+          m_spoolMotor.setVoltage(voltage);
+        });
+  }
+
+  public CommandBase setVoltage(double voltage) {
+    return runOnce(
+        () -> {
+          m_armMotorLeader.setVoltage(voltage);
+        });
+  }
 
   @Override
   public void simulationPeriodic() {

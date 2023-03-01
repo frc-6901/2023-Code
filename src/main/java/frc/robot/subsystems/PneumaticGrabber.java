@@ -16,13 +16,13 @@ import frc.robot.Constants.GrabberConstants;
 
 public class PneumaticGrabber extends SubsystemBase {
 
-  private final DoubleSolenoid m_leftGrabberSolenoid =
+  private final DoubleSolenoid m_grabberSolenoid =
   new DoubleSolenoid(
       PneumaticsModuleType.CTREPCM,
       GrabberConstants.kGrabberSolenoidPorts[0],
       GrabberConstants.kGrabberSolenoidPorts[1]);
 
-  private final DoubleSolenoid m_rightGrabberSolenoid =
+      private final DoubleSolenoid m_grabberSolenoid2 =
   new DoubleSolenoid(
       PneumaticsModuleType.CTREPCM,
       GrabberConstants.kGrabberSolenoidPorts[2],
@@ -30,16 +30,16 @@ public class PneumaticGrabber extends SubsystemBase {
 
   /** Creates a new PneumaticGrabber. */
   public PneumaticGrabber() {
-    m_leftGrabberSolenoid.set(kOff);
-    m_rightGrabberSolenoid.set(kOff);
+    m_grabberSolenoid.set(kOff);
+    m_grabberSolenoid2.set(kOff);
   }
 
   // Open grabber
   public CommandBase openGrabber() {
     return runOnce(
         () -> {
-          m_leftGrabberSolenoid.set(kReverse);
-          m_rightGrabberSolenoid.set(kReverse);
+          m_grabberSolenoid.set(kReverse);
+          m_grabberSolenoid2.set(kReverse);
         });
   }
 
@@ -47,8 +47,8 @@ public class PneumaticGrabber extends SubsystemBase {
   public CommandBase closeGrabber() {
     return runOnce(
         () -> {
-          m_leftGrabberSolenoid.set(kForward);
-          m_rightGrabberSolenoid.set(kForward);
+          m_grabberSolenoid.set(kForward);
+          m_grabberSolenoid2.set(kForward);
         });
   }
 

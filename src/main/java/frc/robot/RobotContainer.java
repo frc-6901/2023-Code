@@ -4,18 +4,19 @@
 
 package frc.robot;
 
-import frc.robot.Constants.ArmConstants;
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.ExampleCommand;
-//import frc.robot.commands.LimelightAim;
+import frc.robot.commands.LimelightAim;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.ExampleSubsystem;
-//import frc.robot.subsystems.LimelightManager;
+import frc.robot.subsystems.LimelightManager;
 import frc.robot.subsystems.PneumaticGrabber;
 import frc.robot.subsystems.DriveSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -50,48 +51,35 @@ public class RobotContainer {
 
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
 
-  // private final Drivetrain m_drivetrain = new Drivetrain();
+  private final Arm m_arm = new Arm();
 
-  // private final Arm m_arm = new Arm();
-
-  //private final LimelightManager m_limelight = new LimelightManager();
+  private final LimelightManager m_limelight = new LimelightManager();
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_navigatorController =
-      new CommandXboxController(ControllerConstants.kOperatorPort);
+      new CommandXboxController(ControllerConstants.kNavigatorPort);
 
   private final CommandXboxController m_operatorController =
       new CommandXboxController(ControllerConstants.kOperatorPort);
-
+      
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
 
     m_robotDrive.setDefaultCommand(
-    // The left stick controls translation of the robot.
-        // Turning is controlled by the X axis of the right stick.
         new RunCommand(
             () -> m_robotDrive.drive(
-                -MathUtil.applyDeadband(m_navigatorController.getLeftY(), ControllerConstants.kDriveDeadband),
-                -MathUtil.applyDeadband(m_navigatorController.getLeftX(), ControllerConstants.kDriveDeadband),
-                -MathUtil.applyDeadband(m_navigatorController.getRightX(), ControllerConstants.kDriveDeadband),
+                -MathUtil.applyDeadband(m_navigatorController.getLeftY() * 0.3, ControllerConstants.kDriveDeadband),
+                -MathUtil.applyDeadband(m_navigatorController.getLeftX() * 0.3, ControllerConstants.kDriveDeadband),
+                -MathUtil.applyDeadband(m_navigatorController.getRightX() * 0.3, ControllerConstants.kDriveDeadband),
                 false, false),
             m_robotDrive));
 
-    /*m_drivetrain.setDefaultCommand(
+    m_arm.setDefaultCommand(
       new RunCommand(
           () -> {
-            m_drivetrain.drive(
-                -DrivetrainConstants.kDriveForwardMultiplier * m_navigatorController.getLeftY(),
-                DrivetrainConstants.kDriveTurnMultiplier * m_navigatorController.getLeftX());
+            m_arm.setVoltage(4 * m_operatorController.getRightY());
           },
-          m_drivetrain));*/
-
-    /*m_arm.setDefaultCommand(
-      new RunCommand(
-          () -> {
-            m_arm.setVoltage(6 * m_operatorController.getRightY());
-          },
-          m_arm));*/
+          m_arm));
 
     // Configure the trigger bindings
     configureBindings();
@@ -111,16 +99,40 @@ public class RobotContainer {
     new Trigger(m_exampleSubsystem::exampleCondition)
         .onTrue(new ExampleCommand(m_exampleSubsystem));
 
-    // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,
-    // cancelling on release.
-    /*m_operatorController.a().onTrue(m_arm.setPosition(ArmConstants.position[0]));
-    m_operatorController.b().onTrue(m_arm.setPosition(ArmConstants.position[1]));
-    m_operatorController.y().onTrue(m_arm.setPosition(ArmConstants.position[2]));*/
-    /*m_operatorController.x().whileTrue(new LimelightAim(m_limelight, m_robotDrive));*/
+    m_operatorController.y().onTrue(new LimelightAim(m_limelight, m_robotDrive)
+      .andThen(m_arm.setAngle(30)
+        .andThen(m_arm.setSpoolVoltage(2))
+          .andThen(new WaitCommand(.3))
+            .andThen(m_arm.setSpoolVoltage(0))
+              .andThen(m_pneumaticGrabber.openGrabber())
+                .andThen(new WaitCommand(0.3))
+                  .andThen(m_pneumaticGrabber.closeGrabber())
+                    .andThen(m_arm.setSpoolVoltage(-2))
+                      .andThen(new WaitCommand(.3))
+                        .andThen(m_arm.setSpoolVoltage(0))
+            ));
+              
+    m_operatorController.x().whileTrue(new LimelightAim(m_limelight, m_robotDrive));
+
+    boolean inManualMode = false;
+
+    if (m_operatorController.a().getAsBoolean())
+      inManualMode = true;
+    if (m_operatorController.x().getAsBoolean() || m_operatorController.y().getAsBoolean())
+      inManualMode = false;
     
-    m_operatorController.leftBumper().onTrue(m_pneumaticGrabber.openGrabber());
-    m_operatorController.rightBumper().onTrue(m_pneumaticGrabber.closeGrabber());
-    m_navigatorController.x().onTrue(m_robotDrive.setX());
+    if (inManualMode) {
+      if (m_operatorController.getHID().getPOV() <= 10 && m_operatorController.getHID().getPOV() >= 350) {
+        m_arm.setSpoolVoltage(2);
+
+      }
+      if (m_operatorController.getHID().getPOV() >= 170 && m_operatorController.getHID().getPOV() <= 190) {
+        m_arm.setSpoolVoltage(-2);
+      }
+      
+      m_operatorController.leftTrigger().onTrue(m_arm.setAngle(0));
+      m_operatorController.rightTrigger().onTrue(m_arm.setVoltage(-2));
+    }
   }
 
   /** 

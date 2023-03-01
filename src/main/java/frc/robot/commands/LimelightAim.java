@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-/*package frc.robot.commands;
+package frc.robot.commands;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
@@ -15,7 +15,7 @@ import frc.robot.subsystems.LimelightManager;
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
 public class LimelightAim extends PIDCommand {
   /** Creates a new LimelightAim. */
-  /*public LimelightAim(LimelightManager limelight, DriveSubsystem driveSubsystem) {
+  public LimelightAim(LimelightManager limelight, DriveSubsystem driveSubsystem) {
     super(
         // The controller that the command will use
         new PIDController(LimelightConstants.kLimelightP, 0, LimelightConstants.kLimelightD),
@@ -31,6 +31,7 @@ public class LimelightAim extends PIDCommand {
     addRequirements(driveSubsystem);
 
     // Configure additional PID options by calling `getController` here.
+
   }
 
   // Returns true when the command should end.
@@ -39,4 +40,3 @@ public class LimelightAim extends PIDCommand {
     return false;
   }
 }
-*/

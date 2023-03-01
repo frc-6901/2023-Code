@@ -117,12 +117,12 @@ public final class Constants {
   public static final class ControllerConstants {
     public static final int kNavigatorPort = 0;
     public static final int kOperatorPort = 1;
-    public static final double kDriveDeadband = 0.05;
+    public static final double kDriveDeadband = 0.1;
   }
 
   public static final class ArmConstants {
-    public static final int kArmMotorLeaderPort = 41;
-    public static final int kArmMotorFollowerPort = 2;
+    public static final int kArmMotorLeaderPort = 9;
+    public static final int kArmMotorFollowerPort = 10;
     public static final double kPower = 0.6;
     public static final double kP = 0.0001;
     public static final double kD = 0.5;
@@ -134,7 +134,7 @@ public final class Constants {
   }
 
   public static final class GrabberConstants {
-    public static final int kGrabberSolenoidPorts[] = {4, 5, 6, 7};
+    public static final int kGrabberSolenoidPorts[] = {2, 3, 4, 5};
     public static final int kIntakeVoltage = 6;
   }
 
