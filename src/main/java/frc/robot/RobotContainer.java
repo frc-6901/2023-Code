@@ -88,12 +88,12 @@ public class RobotContainer {
                 false, false),
             m_robotDrive));
 
-    m_arm.setDefaultCommand(
+    /*m_arm.setDefaultCommand(
       new RunCommand(
           () -> {
             m_arm.setVoltage(-MathUtil.applyDeadband(m_operatorController.getLeftY() * 4, ControllerConstants.kDriveDeadband));
           },
-          m_arm));
+          m_arm));*/
 
     // Configure the trigger bindings
     configureBindings();
@@ -125,27 +125,19 @@ public class RobotContainer {
                       .andThen(new WaitCommand(.3))
                         .andThen(m_arm.setSpoolVoltage(0))
             ));*/
-              
-    //m_operatorController.x().whileTrue(new LimelightAim(m_limelight, m_robotDrive));
- 
-    /*boolean inManualMode = false;
-
-    if (m_operatorController.a().getAsBoolean())
-      inManualMode = true;
-    if (m_operatorController.x().getAsBoolean() || m_operatorController.y().getAsBoolean())
-      inManualMode = false;*/
+            
     m_operatorController.x().onTrue(m_arm.set(0.5));
     m_operatorController.x().onFalse(m_arm.set(0));
     m_operatorController.b().onTrue(m_arm.set(-0.5));
     m_operatorController.b().onFalse(m_arm.set(0));
     m_operatorController.a().onTrue(m_arm.togglePositionMode());
-    //m_operatorController.leftBumper().onTrue(m_arm.setAngle(-10));
-    //m_operatorController.rightBumper().onTrue(m_arm.setAngle(-2));
+    m_operatorController.leftBumper().onTrue(m_arm.increaseArmAngle());
+    m_operatorController.rightBumper().onTrue(m_arm.decreaseArmAngle());
 
-      m_navigatorController.rightTrigger().onTrue(m_pneumaticGrabber.openGrabber());
+    m_navigatorController.leftBumper().onTrue(m_pneumaticGrabber.openGrabber());
+    m_navigatorController.rightBumper().onTrue(m_pneumaticGrabber.closeGrabber());
 
-
-      m_navigatorController.leftTrigger().onTrue(m_pneumaticGrabber.closeGrabber());
+      
   }
 
   /** 
