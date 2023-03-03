@@ -4,7 +4,9 @@
 
 package frc.robot;
 
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.commands.LimelightAim;
@@ -14,13 +16,18 @@ import frc.robot.subsystems.LimelightManager;
 import frc.robot.subsystems.PneumaticGrabber;
 import frc.robot.subsystems.DriveSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import java.util.List;
+
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 /*import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -36,6 +43,13 @@ import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import java.util.List;*/
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -68,8 +82,8 @@ public class RobotContainer {
     m_robotDrive.setDefaultCommand(
         new RunCommand(
             () -> m_robotDrive.drive(
-                -MathUtil.applyDeadband(m_navigatorController.getLeftY() * 0.3, ControllerConstants.kDriveDeadband),
-                -MathUtil.applyDeadband(m_navigatorController.getLeftX() * 0.3, ControllerConstants.kDriveDeadband),
+                -MathUtil.applyDeadband(m_navigatorController.getLeftY() * 0.6, ControllerConstants.kDriveDeadband),
+                -MathUtil.applyDeadband(m_navigatorController.getLeftX() * 0.6, ControllerConstants.kDriveDeadband),
                 -MathUtil.applyDeadband(m_navigatorController.getRightX() * 0.3, ControllerConstants.kDriveDeadband),
                 false, false),
             m_robotDrive));
@@ -77,9 +91,10 @@ public class RobotContainer {
     m_arm.setDefaultCommand(
       new RunCommand(
           () -> {
-            m_arm.setVoltage(4 * m_operatorController.getRightY());
+            m_arm.setVoltage(-MathUtil.applyDeadband(m_operatorController.getLeftY() * 4, ControllerConstants.kDriveDeadband));
           },
           m_arm));
+
 
     // Configure the trigger bindings
     configureBindings();
@@ -99,7 +114,7 @@ public class RobotContainer {
     new Trigger(m_exampleSubsystem::exampleCondition)
         .onTrue(new ExampleCommand(m_exampleSubsystem));
 
-    m_operatorController.y().onTrue(new LimelightAim(m_limelight, m_robotDrive)
+    /*m_operatorController.y().onTrue(new LimelightAim(m_limelight, m_robotDrive)
       .andThen(m_arm.setAngle(30)
         .andThen(m_arm.setSpoolVoltage(2))
           .andThen(new WaitCommand(.3))
@@ -110,29 +125,28 @@ public class RobotContainer {
                     .andThen(m_arm.setSpoolVoltage(-2))
                       .andThen(new WaitCommand(.3))
                         .andThen(m_arm.setSpoolVoltage(0))
-            ));
+            ));*/
               
-    m_operatorController.x().whileTrue(new LimelightAim(m_limelight, m_robotDrive));
-
-    boolean inManualMode = false;
+    //m_operatorController.x().whileTrue(new LimelightAim(m_limelight, m_robotDrive));
+ 
+    /*boolean inManualMode = false;
 
     if (m_operatorController.a().getAsBoolean())
       inManualMode = true;
     if (m_operatorController.x().getAsBoolean() || m_operatorController.y().getAsBoolean())
-      inManualMode = false;
-    
-    if (inManualMode) {
-      if (m_operatorController.getHID().getPOV() <= 10 && m_operatorController.getHID().getPOV() >= 350) {
-        m_arm.setSpoolVoltage(2);
+      inManualMode = false;*/
+    m_operatorController.x().onTrue(m_arm.setSpoolVoltage(.3));
+    m_operatorController.b().onTrue(m_arm.setSpoolVoltage(-.3));
+    m_operatorController.x().onFalse(m_arm.setSpoolVoltage(0));
+    m_operatorController.b().onFalse(m_arm.setSpoolVoltage(0));
+    m_operatorController.a().onTrue(m_arm.togglePositionMode());
+    m_operatorController.leftBumper().onTrue(m_arm.setAngle(-10));
+    m_operatorController.rightBumper().onTrue(m_arm.setAngle(-2));
 
-      }
-      if (m_operatorController.getHID().getPOV() >= 170 && m_operatorController.getHID().getPOV() <= 190) {
-        m_arm.setSpoolVoltage(-2);
-      }
+      m_navigatorController.leftTrigger().onTrue(m_pneumaticGrabber.openGrabber());
+
       
-      m_operatorController.leftTrigger().onTrue(m_arm.setAngle(0));
-      m_operatorController.rightTrigger().onTrue(m_arm.setVoltage(-2));
-    }
+      m_navigatorController.rightTrigger().onTrue(m_pneumaticGrabber.closeGrabber());
   }
 
   /** 
@@ -141,7 +155,39 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // An example command will be run in autonomous
-    return Autos.exampleAuto(m_exampleSubsystem);
+    TrajectoryConfig m_trajectoryConfig = new TrajectoryConfig(
+        AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared,
+        AutoConstants.kMaxAccelerationMetersPerSecondSquared).setKinematics(DriveConstants.kDriveKinematics);
+
+      Trajectory m_trajectory = TrajectoryGenerator.generateTrajectory(
+        new Pose2d(0, 0, new Rotation2d(0)),
+        List.of(
+                new Translation2d(3, 0),
+                new Translation2d(3, -1)),
+        new Pose2d(2, -1, Rotation2d.fromDegrees(0)),
+        m_trajectoryConfig);
+
+      PIDController xController = new PIDController(AutoConstants.kPXController, 0, 0);
+      PIDController yController = new PIDController(AutoConstants.kPYController, 0, 0);
+      ProfiledPIDController thetaController = new ProfiledPIDController(AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
+      thetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+
+
+      SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
+        m_trajectory, 
+        m_robotDrive::getPose, 
+        DriveConstants.kDriveKinematics, 
+        xController, 
+        yController, 
+        thetaController, 
+        m_robotDrive::setModuleStates, 
+        m_robotDrive);
+
+        // Reset odometry to the starting pose of the trajectory.
+    m_robotDrive.resetOdometry(m_trajectory.getInitialPose());
+      
+    // Run path following command, then stop at the end.
+    return swerveControllerCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false));
   }
 }

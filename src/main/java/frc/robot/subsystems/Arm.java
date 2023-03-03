@@ -4,7 +4,10 @@
 
 package frc.robot.subsystems;
 
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.RemoteFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
+import com.ctre.phoenix.motorcontrol.TalonSRXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
@@ -12,7 +15,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.CANSparkMax.IdleMode;
 
-import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -25,12 +28,8 @@ public class Arm extends SubsystemBase {
   private CANSparkMax m_armMotorFollower =
       new CANSparkMax(ArmConstants.kArmMotorFollowerPort, MotorType.kBrushless);
 
-  private WPI_TalonSRX m_spoolMotor = new WPI_TalonSRX(0);
-
   // Spark Max PID Controller Object
   private SparkMaxPIDController m_armController = m_armMotorLeader.getPIDController();
-
-  private PIDController m_spoolMotorController = new PIDController(.05, 0, 0);
 
   // Spark Max Relative Encoder Object
   private RelativeEncoder m_encoder = m_armMotorLeader.getEncoder();
@@ -42,13 +41,16 @@ public class Arm extends SubsystemBase {
   public double kMaxOutput = 1;
   public double kMinOutput = -1;
 
+  /*public enum Position {
+    GROUND, LOW, HIGH;
+  }
+  private Position m_position = Position.GROUND;*/
+
   private double m_desiredAngle = 0.0;
 
-  public enum armState {
-    START, INTAKE, LOW, MID, HIGH
-  }
+  private WPI_TalonSRX m_spoolSRX = new WPI_TalonSRX(11);
 
-  private armState m_armState = armState.START;
+  private boolean positionMode = false;
 
   /** Creates a new Arm */
   public Arm() {
@@ -57,6 +59,7 @@ public class Arm extends SubsystemBase {
     m_armMotorLeader.setInverted(true);
     m_armMotorLeader.setIdleMode(IdleMode.kBrake);
     m_armMotorFollower.setIdleMode(IdleMode.kBrake);
+
     m_armMotorFollower.follow(m_armMotorLeader, true);
 
     // Set PID coefficients
@@ -73,10 +76,18 @@ public class Arm extends SubsystemBase {
     SmartDashboard.putNumber("Min Output", kMinOutput);
     SmartDashboard.putNumber("Arm Angle", 0);
     SmartDashboard.putNumber("Set Rotations", 0);
+
+
+    m_spoolSRX.configFactoryDefault();
+
+    m_spoolSRX.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder);
+    m_spoolSRX.setSensorPhase(true);
+
   }
 
   @Override
   public void periodic() {
+    if (positionMode) {
     // read PID coefficients from SmartDashboard
     double p = SmartDashboard.getNumber("P Gain", 0);
     double d = SmartDashboard.getNumber("D Gain", 0);
@@ -86,35 +97,14 @@ public class Arm extends SubsystemBase {
     double armAngle = SmartDashboard.getNumber("Arm Angle", 0);
     double rotations = SmartDashboard.getNumber("Set Rotations", 0);
 
-    // Get desired arm angle
-    switch (m_armState) {
-      case START:
-        m_desiredAngle = 0;
-        m_spoolMotor.set(TalonSRXControlMode.Position, 1);
-        break;
-      case INTAKE:
-        m_desiredAngle = 25;
-        m_spoolMotor.set(TalonSRXControlMode.Position, 1);
-        break;
-      case LOW:
-        m_desiredAngle = 50;
-        m_spoolMotor.set(TalonSRXControlMode.Position, 1);
-        break;
-      case MID:
-        m_desiredAngle = 70;
-        m_spoolMotor.set(TalonSRXControlMode.Position, 1);
-        break;
-      case HIGH:
-        m_desiredAngle = 90;
-        m_spoolMotor.set(TalonSRXControlMode.Position, 1);
-        break;
-    }
-    
-    // Desired angle - current angle = difference in degrees
-    // degrees per rotation = 4.5
-    // rotations = difference / degrees per rotation
-    double degreesPerRotation = 360 / 80;
-    rotations = m_desiredAngle - armAngle / degreesPerRotation;
+    // Get desired armAngle. If not == to arm angle, rotate arm difference in degreees # of rotations
+    // position = 0, 1, or 2
+    // Each unit is 27 degrees
+    // Each rotation is 9 degrees
+    // A one unit difference in position will be 3 rotations
+    // (Desired position - actual position) * 3 rotations = # of rotations
+    double degreesPerRotation = 4.5;
+    rotations = m_desiredAngle;
     SmartDashboard.putNumber("Arm Angle", m_desiredAngle);
 
     // if PID coefficients on SmartDashboard have changed, write new values to controller
@@ -131,25 +121,31 @@ public class Arm extends SubsystemBase {
     SmartDashboard.putNumber("SetPoint", rotations);
     SmartDashboard.putNumber("ProcessVariable", m_encoder.getPosition());
   }
+  }
 
   public CommandBase setAngle(double angle) {
     return runOnce(
         () -> {
-          m_desiredAngle = angle;
+          m_desiredAngle = -angle;
         });
   }
 
-  public CommandBase setSpoolVoltage(double voltage) {
+  public CommandBase togglePositionMode() {
     return runOnce(
         () -> {
-          m_spoolMotor.setVoltage(voltage);
+          positionMode = !positionMode;
         });
   }
 
-  public CommandBase setVoltage(double voltage) {
+  public void setVoltage(Double voltage) {
+    if (!positionMode)
+      m_armMotorLeader.setVoltage(voltage);
+  }
+
+  public CommandBase setSpoolVoltage(double value) {
     return runOnce(
         () -> {
-          m_armMotorLeader.setVoltage(voltage);
+          m_spoolSRX.set(TalonSRXControlMode.PercentOutput, value);
         });
   }
 

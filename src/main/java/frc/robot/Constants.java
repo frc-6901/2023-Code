@@ -123,9 +123,9 @@ public final class Constants {
   public static final class ArmConstants {
     public static final int kArmMotorLeaderPort = 9;
     public static final int kArmMotorFollowerPort = 10;
-    public static final double kPower = 0.6;
-    public static final double kP = 0.0001;
-    public static final double kD = 0.5;
+    public static final double kPower = 0.4;
+    public static final double kP = 0.00000001;
+    public static final double kD = 0.0002;
     public static final double kFF = 0; 
     public static final double kMaxOutput = 1; 
     public static final double kMinOutput = -1;
@@ -173,14 +173,14 @@ public final class Constants {
     public static final double kTurnRateTolerance = 1.5;
 
     public static final double kAutoMaxSpeed = 1;
-    public static final double kAutoMaxAccel = 2;
+    public static final double kAutoMaxAccel = 1;
 
     public static final double kAutoTime = 2.5;
   }
 
   public static final class AutoConstants {
-    public static final double kMaxSpeedMetersPerSecond = 3;
-    public static final double kMaxAccelerationMetersPerSecondSquared = 3;
+    public static final double kMaxSpeedMetersPerSecond = 1;
+    public static final double kMaxAccelerationMetersPerSecondSquared = 1;
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
     public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
 

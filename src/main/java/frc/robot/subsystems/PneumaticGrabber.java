@@ -48,7 +48,6 @@ public class PneumaticGrabber extends SubsystemBase {
     return runOnce(
         () -> {
           m_grabberSolenoid.set(kForward);
-          m_grabberSolenoid2.set(kForward);
         });
   }
 
