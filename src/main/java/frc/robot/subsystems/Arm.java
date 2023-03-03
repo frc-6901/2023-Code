@@ -5,9 +5,8 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.RemoteFeedbackDevice;
+import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
-import com.ctre.phoenix.motorcontrol.TalonSRXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
@@ -15,11 +14,12 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.CANSparkMax.IdleMode;
 
-import edu.wpi.first.wpilibj.motorcontrol.Talon;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ArmConstants;
+import frc.utils.MagEncoderUtil;
 
 public class Arm extends SubsystemBase {
   // Spark Max Motor Controller Object
@@ -50,6 +50,10 @@ public class Arm extends SubsystemBase {
 
   private WPI_TalonSRX m_spoolSRX = new WPI_TalonSRX(11);
 
+  private double m_openLoopPower = 0.2;
+
+  private double m_targetSpoolAngle = 0;
+
   private boolean positionMode = false;
 
   /** Creates a new Arm */
@@ -79,10 +83,40 @@ public class Arm extends SubsystemBase {
 
 
     m_spoolSRX.configFactoryDefault();
+    m_spoolSRX.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
+    m_spoolSRX.setSensorPhase(false);
+    m_spoolSRX.setInverted(InvertType.InvertMotorOutput);
+    m_spoolSRX.configForwardSoftLimitThreshold(MagEncoderUtil.distanceToNativeUnits(0, 1, 30));
+    m_spoolSRX.configForwardSoftLimitEnable(true);
+    m_spoolSRX.configReverseSoftLimitThreshold(MagEncoderUtil.distanceToNativeUnits(-.235, 1, 30));
+    m_spoolSRX.configReverseSoftLimitEnable(true);
+    m_spoolSRX.setSelectedSensorPosition(0.0);
+    // m_spoolMotor.config_kP(0, ArmConstants.kSpoolP);
+  }
 
-    m_spoolSRX.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder);
-    m_spoolSRX.setSensorPhase(true);
+  public CommandBase set(double percentPower) {
+    return runOnce(
+        () -> {
+          m_openLoopPower = percentPower;
+        });
+  }
 
+  public double getPositionDegrees() {
+    return MagEncoderUtil.nativeUnitsToDistance(
+        m_spoolSRX.getSelectedSensorPosition(), 1, 30);
+  }
+
+  public double getVelocityDegreesPerSec() {
+    return MagEncoderUtil.nativeUnitsToVelocity(
+        m_spoolSRX.getSelectedSensorVelocity(),1, 30);
+  }
+
+  public void setTargetPosition(double degrees) {
+    m_targetSpoolAngle = degrees;
+  }
+
+  public boolean atTargetPosition() {
+    return Math.abs(m_targetSpoolAngle - getPositionDegrees()) < 1;
   }
 
   @Override
@@ -120,7 +154,20 @@ public class Arm extends SubsystemBase {
     
     SmartDashboard.putNumber("SetPoint", rotations);
     SmartDashboard.putNumber("ProcessVariable", m_encoder.getPosition());
-  }
+
+    }
+
+    
+    SmartDashboard.putNumber("Spool Position", getPositionDegrees());
+    SmartDashboard.putNumber("Target Position", m_targetSpoolAngle);
+    SmartDashboard.putNumber("Spool Position Rad", Units.degreesToRadians(getPositionDegrees()));
+
+    SmartDashboard.putNumber("m_openLoopPower", m_openLoopPower);
+      if (Math.abs(m_openLoopPower) > 0.25) {
+        m_spoolSRX.set((m_openLoopPower > 0 ? 1 : -1) * 0.8);
+      } else {
+        m_spoolSRX.set(0);
+      }
   }
 
   public CommandBase setAngle(double angle) {
