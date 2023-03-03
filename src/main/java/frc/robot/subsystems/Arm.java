@@ -5,7 +5,6 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.revrobotics.CANSparkMax;
@@ -19,6 +18,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ArmConstants;
+import frc.robot.Constants.ArmConstants.armPosition;
 import frc.utils.MagEncoderUtil;
 
 public class Arm extends SubsystemBase {
@@ -35,20 +35,15 @@ public class Arm extends SubsystemBase {
   private RelativeEncoder m_encoder = m_armMotorLeader.getEncoder();
 
   // PID Coefficients
-  public double kP = 0.1;
-  public double kD = 0.5;
-  public double kFF = 0;
-  public double kMaxOutput = 1;
-  public double kMinOutput = -1;
+  public double kP = ArmConstants.kP;
+  public double kD = ArmConstants.kD;
+  public double kFF = ArmConstants.kFF;
+  public double kMaxOutput = ArmConstants.kMaxOutput;
+  public double kMinOutput = ArmConstants.kMinOutput;
 
-  /*public enum Position {
-    GROUND, LOW, HIGH;
-  }
-  private Position m_position = Position.GROUND;*/
+  private double m_rotationPosition = 0.0;
 
-  private double m_desiredAngle = 0.0;
-
-  private WPI_TalonSRX m_spoolSRX = new WPI_TalonSRX(11);
+  private WPI_TalonSRX m_spoolSRX = new WPI_TalonSRX(ArmConstants.kSpoolMotorPort);
 
   private double m_openLoopPower = 0.2;
 
@@ -56,14 +51,17 @@ public class Arm extends SubsystemBase {
 
   private boolean positionMode = false;
 
+  private armPosition m_armPosition = armPosition.START;
+
+  private double m_spoolPosition;
+
   /** Creates a new Arm */
   public Arm() {
     m_armMotorLeader.restoreFactoryDefaults();
     m_armMotorFollower.restoreFactoryDefaults();
-    m_armMotorLeader.setInverted(true);
+    m_armMotorFollower.setInverted(true);
     m_armMotorLeader.setIdleMode(IdleMode.kBrake);
     m_armMotorFollower.setIdleMode(IdleMode.kBrake);
-
     m_armMotorFollower.follow(m_armMotorLeader, true);
 
     // Set PID coefficients
@@ -81,14 +79,13 @@ public class Arm extends SubsystemBase {
     SmartDashboard.putNumber("Arm Angle", 0);
     SmartDashboard.putNumber("Set Rotations", 0);
 
-
     m_spoolSRX.configFactoryDefault();
     m_spoolSRX.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
     m_spoolSRX.setSensorPhase(false);
-    m_spoolSRX.setInverted(InvertType.InvertMotorOutput);
-    m_spoolSRX.configForwardSoftLimitThreshold(MagEncoderUtil.distanceToNativeUnits(0, 1, 30));
+    m_spoolSRX.setInverted(false);
+    m_spoolSRX.configForwardSoftLimitThreshold(MagEncoderUtil.distanceToNativeUnits(ArmConstants.kSpoolMotorForwardLimit, 1, 30));
     m_spoolSRX.configForwardSoftLimitEnable(true);
-    m_spoolSRX.configReverseSoftLimitThreshold(MagEncoderUtil.distanceToNativeUnits(-.235, 1, 30));
+    m_spoolSRX.configReverseSoftLimitThreshold(MagEncoderUtil.distanceToNativeUnits(ArmConstants.kSpoolMotorReverseLimit, 1, 30));
     m_spoolSRX.configReverseSoftLimitEnable(true);
     m_spoolSRX.setSelectedSensorPosition(0.0);
     // m_spoolMotor.config_kP(0, ArmConstants.kSpoolP);
@@ -138,15 +135,15 @@ public class Arm extends SubsystemBase {
     // A one unit difference in position will be 3 rotations
     // (Desired position - actual position) * 3 rotations = # of rotations
     double degreesPerRotation = 4.5;
-    rotations = m_desiredAngle;
-    SmartDashboard.putNumber("Arm Angle", m_desiredAngle);
+    rotations = m_rotationPosition;
+    SmartDashboard.putNumber("Arm Angle", m_rotationPosition);
 
     // if PID coefficients on SmartDashboard have changed, write new values to controller
     if((p != kP)) { m_armController.setP(p); kP = p; }
     if((d != kD)) { m_armController.setD(d); kD = d; }
     if((ff != kFF)) { m_armController.setFF(ff); kFF = ff; }
     if((max != kMaxOutput) || (min != kMinOutput)) { 
-      m_armController.setOutputRange(min, max); 
+      m_armController.setOutputRange(min, max);
       kMinOutput = min; kMaxOutput = max;
     }
 
@@ -156,7 +153,6 @@ public class Arm extends SubsystemBase {
     SmartDashboard.putNumber("ProcessVariable", m_encoder.getPosition());
 
     }
-
     
     SmartDashboard.putNumber("Spool Position", getPositionDegrees());
     SmartDashboard.putNumber("Target Position", m_targetSpoolAngle);
@@ -168,12 +164,33 @@ public class Arm extends SubsystemBase {
       } else {
         m_spoolSRX.set(0);
       }
+
+    m_spoolSRX.set(TalonSRXControlMode.Position, MagEncoderUtil.nativeUnitsToDistance(0.1, 1, 30));
+
+    switch (m_armPosition) {
+      case START:
+        this.setAngle(0);
+        m_spoolPosition = 0;
+        break;
+      case INTAKE:
+        this.setAngle(10);
+        m_spoolPosition = 0.1;
+        break;
+      case LOW:
+        this.setAngle(15);
+        m_spoolPosition = 0.15;
+        break;
+      case HIGH:
+        this.setAngle(22);
+        m_spoolPosition = 0.225;
+        break;
+    }
   }
 
-  public CommandBase setAngle(double angle) {
+  public CommandBase setAngle(double rotation) {
     return runOnce(
         () -> {
-          m_desiredAngle = -angle;
+          m_rotationPosition = rotation;
         });
   }
 
@@ -184,15 +201,27 @@ public class Arm extends SubsystemBase {
         });
   }
 
-  public void setVoltage(Double voltage) {
-    if (!positionMode)
-      m_armMotorLeader.setVoltage(voltage);
-  }
-
-  public CommandBase setSpoolVoltage(double value) {
+  public CommandBase increaseArmAngle() {
     return runOnce(
         () -> {
-          m_spoolSRX.set(TalonSRXControlMode.PercentOutput, value);
+          if (m_armPosition == armPosition.START)
+            m_armPosition = armPosition.INTAKE;
+          else if (m_armPosition == armPosition.INTAKE)
+            m_armPosition = armPosition.LOW;
+          else if (m_armPosition == armPosition.LOW)
+            m_armPosition = armPosition.HIGH;
+        });
+  }
+
+  public CommandBase decreaseArmAngle() {
+    return runOnce(
+        () -> {
+          if (m_armPosition == armPosition.HIGH)
+            m_armPosition = armPosition.LOW;
+          else if (m_armPosition == armPosition.LOW)
+            m_armPosition = armPosition.INTAKE;
+          else if (m_armPosition == armPosition.INTAKE)
+            m_armPosition = armPosition.START;
         });
   }
 
