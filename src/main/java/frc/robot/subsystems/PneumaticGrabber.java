@@ -22,24 +22,16 @@ public class PneumaticGrabber extends SubsystemBase {
       GrabberConstants.kGrabberSolenoidPorts[0],
       GrabberConstants.kGrabberSolenoidPorts[1]);
 
-      private final DoubleSolenoid m_grabberSolenoid2 =
-  new DoubleSolenoid(
-      PneumaticsModuleType.CTREPCM,
-      GrabberConstants.kGrabberSolenoidPorts[2],
-      GrabberConstants.kGrabberSolenoidPorts[3]);
-
   /** Creates a new PneumaticGrabber. */
   public PneumaticGrabber() {
     m_grabberSolenoid.set(kOff);
-    m_grabberSolenoid2.set(kOff);
   }
 
   // Open grabber
   public CommandBase openGrabber() {
     return runOnce(
         () -> {
-          m_grabberSolenoid.set(kReverse);
-          m_grabberSolenoid2.set(kReverse);
+            m_grabberSolenoid.set(kReverse);
         });
   }
 
@@ -47,7 +39,8 @@ public class PneumaticGrabber extends SubsystemBase {
   public CommandBase closeGrabber() {
     return runOnce(
         () -> {
-          m_grabberSolenoid.set(kForward);
+          if (GrabberConstants.isStart != 0)
+            m_grabberSolenoid.set(kForward);
         });
   }
 

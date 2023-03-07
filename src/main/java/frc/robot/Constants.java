@@ -124,24 +124,26 @@ public final class Constants {
     public static final int kArmMotorLeaderPort = 9;
     public static final int kArmMotorFollowerPort = 10;
     public static final double kPower = 0.4;
-    public static final double kP = 0.01;
-    public static final double kD = 0.05;
+    public static final double kP = 0.04;
+    public static final double kD = 0.4;
     public static final double kFF = 0; 
     public static final double kMaxOutput = 1;
     public static final double kMinOutput = -1;
 
     public static final int kSpoolMotorPort = 11;
-    public static final double kSpoolMotorForwardLimit = .225;
+    public static final double kSpoolMotorForwardLimit = 0.227;
     public static final double kSpoolMotorReverseLimit = 0;
+    public static final double kInitialSpoolPosition = 0;
 
     public enum armPosition {
-      START, INTAKE, LOW, HIGH;
+      START, INTAKE, LOW, HIGH, EXTRA_HIGH;
     }
   }
 
   public static final class GrabberConstants {
     public static final int kGrabberSolenoidPorts[] = {2, 3, 4, 5};
     public static final int kIntakeVoltage = 6;
+    public static Integer isStart = 0;
   }
 
   public static final class DrivetrainConstants {

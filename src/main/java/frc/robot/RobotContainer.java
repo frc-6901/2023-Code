@@ -81,19 +81,17 @@ public class RobotContainer {
 
     m_robotDrive.setDefaultCommand(
         new RunCommand(
+
             () -> m_robotDrive.drive(
-                -MathUtil.applyDeadband(m_navigatorController.getLeftY() * 0.6, ControllerConstants.kDriveDeadband),
-                -MathUtil.applyDeadband(m_navigatorController.getLeftX() * 0.6, ControllerConstants.kDriveDeadband),
-                -MathUtil.applyDeadband(m_navigatorController.getRightX() * 0.3, ControllerConstants.kDriveDeadband),
+                -MathUtil.applyDeadband(m_navigatorController.getLeftY(), ControllerConstants.kDriveDeadband),
+                -MathUtil.applyDeadband(m_navigatorController.getLeftX(), ControllerConstants.kDriveDeadband),
+                -MathUtil.applyDeadband(m_navigatorController.getRightX() * 0.4, ControllerConstants.kDriveDeadband),
                 false, false),
             m_robotDrive));
 
-    /*m_arm.setDefaultCommand(
-      new RunCommand(
-          () -> {
-            m_arm.setVoltage(-MathUtil.applyDeadband(m_operatorController.getLeftY() * 4, ControllerConstants.kDriveDeadband));
-          },
-          m_arm));*/
+    m_arm.setDefaultCommand(
+        new RunCommand(
+            () -> m_arm.manualIntake(m_operatorController.getLeftY()), m_arm));
 
     // Configure the trigger bindings
     configureBindings();
@@ -103,7 +101,7 @@ public class RobotContainer {
    * Use this method to define your trigger->command mappings. Triggers can be created via the
    * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with an arbitrary
    * predicate, or via the named factories in {@link
-   * edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses for {@link
+   * edu.wpi.first.wpilibj2.co bmmand.button.CommandGenericHID}'s subclasses for {@link
    * CommandXboxController Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
    * PS4} controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
    * joysticks}.
@@ -112,32 +110,19 @@ public class RobotContainer {
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
     new Trigger(m_exampleSubsystem::exampleCondition)
         .onTrue(new ExampleCommand(m_exampleSubsystem));
-
-    /*m_operatorController.y().onTrue(new LimelightAim(m_limelight, m_robotDrive)
-      .andThen(m_arm.setAngle(30)
-        .andThen(m_arm.setSpoolVoltage(2))
-          .andThen(new WaitCommand(.3))
-            .andThen(m_arm.setSpoolVoltage(0))
-              .andThen(m_pneumaticGrabber.openGrabber())
-                .andThen(new WaitCommand(0.3))
-                  .andThen(m_pneumaticGrabber.closeGrabber())
-                    .andThen(m_arm.setSpoolVoltage(-2))
-                      .andThen(new WaitCommand(.3))
-                        .andThen(m_arm.setSpoolVoltage(0))
-            ));*/
-            
-    m_operatorController.x().onTrue(m_arm.set(0.5));
-    m_operatorController.x().onFalse(m_arm.set(0));
-    m_operatorController.b().onTrue(m_arm.set(-0.5));
-    m_operatorController.b().onFalse(m_arm.set(0));
-    m_operatorController.a().onTrue(m_arm.togglePositionMode());
+    
+    m_operatorController.y().onTrue(m_arm.set(0.5));
+    m_operatorController.y().onFalse(m_arm.set(0));
+    m_operatorController.a().onTrue(m_arm.set(-0.5));
+    m_operatorController.a().onFalse(m_arm.set(0));
     m_operatorController.leftBumper().onTrue(m_arm.increaseArmAngle());
     m_operatorController.rightBumper().onTrue(m_arm.decreaseArmAngle());
+    m_operatorController.back().onTrue(m_arm.resetArmAngle());
 
-    m_navigatorController.leftBumper().onTrue(m_pneumaticGrabber.openGrabber());
-    m_navigatorController.rightBumper().onTrue(m_pneumaticGrabber.closeGrabber());
-
-      
+    m_operatorController.rightTrigger().onTrue(m_pneumaticGrabber.openGrabber());
+    m_operatorController.leftTrigger().onTrue(m_pneumaticGrabber.closeGrabber());
+    m_navigatorController.rightTrigger().onTrue(m_robotDrive.setSpeedPercent(0.55));
+    m_navigatorController.rightTrigger().onFalse(m_robotDrive.setSpeedPercent(0.4));
   }
 
   /** 
@@ -146,39 +131,58 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    TrajectoryConfig m_trajectoryConfig = new TrajectoryConfig(
-        AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared,
-        AutoConstants.kMaxAccelerationMetersPerSecondSquared).setKinematics(DriveConstants.kDriveKinematics);
+    SequentialCommandGroup Dock = new SequentialCommandGroup(
+      /*new InstantCommand(
+            () -> m_arm.increaseArmAngle()),*/
+      new InstantCommand(
+            () -> m_robotDrive.drive(-0.3, 0, 0, false, false),
+            m_robotDrive), 
+      new WaitCommand(0.55),
+      new InstantCommand(
+            () -> m_robotDrive.drive(0.3, 0, 0, false, false),
+            m_robotDrive), 
+      new WaitCommand(0.3),
+      new InstantCommand(
+            () -> m_robotDrive.drive(0.4, 0, 0, false, false),
+            m_robotDrive),
+      new WaitCommand(3),
+      new InstantCommand(
+            () -> m_robotDrive.drive(0, 0, 0, false, false),
+            m_robotDrive),
+      new WaitCommand(3),
+      new InstantCommand(
+            () -> m_robotDrive.drive(0.5, 0, 0, false, false),
+            m_robotDrive),
+      new WaitCommand(1.31),
+      new InstantCommand(
+            () -> m_robotDrive.drive(0, 0.1, 0, false, false),
+            m_robotDrive),
+      new WaitCommand(0.2),
+      new InstantCommand(
+            () -> m_robotDrive.drive(0, 0, 0, false, false),
+            m_robotDrive));
 
-      Trajectory m_trajectory = TrajectoryGenerator.generateTrajectory(
-        new Pose2d(0, 0, new Rotation2d(0)),
-        List.of(
-                new Translation2d(3, 0),
-                new Translation2d(3, -1)),
-        new Pose2d(2, -1, Rotation2d.fromDegrees(0)),
-        m_trajectoryConfig);
+    SequentialCommandGroup Straight = new SequentialCommandGroup(
+      new InstantCommand(
+            () -> m_robotDrive.drive(-0.4, 0, 0, false, false),
+            m_robotDrive), 
+      new WaitCommand(0.3),
+      new InstantCommand(
+            () -> m_robotDrive.drive(0.4, 0, 0, false, false),
+            m_robotDrive), 
+      new WaitCommand(0.3),
+      new InstantCommand(
+            () -> m_robotDrive.drive(-0.4, 0, 0, false, false),
+            m_robotDrive), 
+      new WaitCommand(0.3),
+      new InstantCommand(
+            () -> m_robotDrive.drive(0.6, 0, 0, false, false),
+            m_robotDrive), 
+      new WaitCommand(3),
+      new InstantCommand(
+            () -> m_robotDrive.drive(0, 0, 0, false, false),
+            m_robotDrive));
 
-      PIDController xController = new PIDController(AutoConstants.kPXController, 0, 0);
-      PIDController yController = new PIDController(AutoConstants.kPYController, 0, 0);
-      ProfiledPIDController thetaController = new ProfiledPIDController(AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
-      thetaController.enableContinuousInput(-Math.PI, Math.PI);
-
-
-
-      SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
-        m_trajectory, 
-        m_robotDrive::getPose, 
-        DriveConstants.kDriveKinematics, 
-        xController, 
-        yController, 
-        thetaController, 
-        m_robotDrive::setModuleStates, 
-        m_robotDrive);
-
-        // Reset odometry to the starting pose of the trajectory.
-    m_robotDrive.resetOdometry(m_trajectory.getInitialPose());
-      
-    // Run path following command, then stop at the end.
-    return swerveControllerCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false));
+    return Dock;
   }
 }

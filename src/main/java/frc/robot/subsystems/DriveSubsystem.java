@@ -48,6 +48,7 @@ public class DriveSubsystem extends SubsystemBase {
   private double m_currentRotation = 0.0;
   private double m_currentTranslationDir = 0.0;
   private double m_currentTranslationMag = 0.0;
+  private double m_speedPercent = 0.4;
 
   private SlewRateLimiter m_magLimiter = new SlewRateLimiter(DriveConstants.kMagnitudeSlewRate);
   private SlewRateLimiter m_rotLimiter = new SlewRateLimiter(DriveConstants.kRotationalSlewRate);
@@ -118,7 +119,9 @@ public class DriveSubsystem extends SubsystemBase {
    * @param rateLimit     Whether to enable rate limiting for smoother control.
    */
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative, boolean rateLimit) {
-    
+    xSpeed *= m_speedPercent;
+    ySpeed *= m_speedPercent;
+
     double xSpeedCommanded;
     double ySpeedCommanded;
 
@@ -206,6 +209,14 @@ public class DriveSubsystem extends SubsystemBase {
     m_frontRight.setVoltageState(output, new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
     m_rearLeft.setVoltageState(output, new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
     m_rearRight.setVoltageState(output, new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+  }
+
+  public CommandBase setSpeedPercent(double speedPercent) {
+    return runOnce(
+        () -> {
+          m_speedPercent = speedPercent;
+        });
+    
   }
 
   /**

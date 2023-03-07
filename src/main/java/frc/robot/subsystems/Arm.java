@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ArmConstants;
+import frc.robot.Constants.GrabberConstants;
 import frc.robot.Constants.ArmConstants.armPosition;
 import frc.utils.MagEncoderUtil;
 
@@ -55,6 +56,8 @@ public class Arm extends SubsystemBase {
 
   private double m_spoolPosition;
 
+  private double controllerInput;
+
   /** Creates a new Arm */
   public Arm() {
     m_armMotorLeader.restoreFactoryDefaults();
@@ -82,12 +85,12 @@ public class Arm extends SubsystemBase {
     m_spoolSRX.configFactoryDefault();
     m_spoolSRX.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
     m_spoolSRX.setSensorPhase(false);
-    m_spoolSRX.setInverted(false);
+    m_spoolSRX.setInverted(true);
     m_spoolSRX.configForwardSoftLimitThreshold(MagEncoderUtil.distanceToNativeUnits(ArmConstants.kSpoolMotorForwardLimit, 1, 30));
     m_spoolSRX.configForwardSoftLimitEnable(true);
     m_spoolSRX.configReverseSoftLimitThreshold(MagEncoderUtil.distanceToNativeUnits(ArmConstants.kSpoolMotorReverseLimit, 1, 30));
     m_spoolSRX.configReverseSoftLimitEnable(true);
-    m_spoolSRX.setSelectedSensorPosition(0.0);
+    m_spoolSRX.setSelectedSensorPosition(ArmConstants.kInitialSpoolPosition);
     // m_spoolMotor.config_kP(0, ArmConstants.kSpoolP);
   }
 
@@ -118,7 +121,6 @@ public class Arm extends SubsystemBase {
 
   @Override
   public void periodic() {
-    if (positionMode) {
     // read PID coefficients from SmartDashboard
     double p = SmartDashboard.getNumber("P Gain", 0);
     double d = SmartDashboard.getNumber("D Gain", 0);
@@ -128,15 +130,18 @@ public class Arm extends SubsystemBase {
     double armAngle = SmartDashboard.getNumber("Arm Angle", 0);
     double rotations = SmartDashboard.getNumber("Set Rotations", 0);
 
-    // Get desired armAngle. If not == to arm angle, rotate arm difference in degreees # of rotations
-    // position = 0, 1, or 2
-    // Each unit is 27 degrees
-    // Each rotation is 9 degrees
-    // A one unit difference in position will be 3 rotations
-    // (Desired position - actual position) * 3 rotations = # of rotations
-    double degreesPerRotation = 4.5;
-    rotations = m_rotationPosition;
-    SmartDashboard.putNumber("Arm Angle", m_rotationPosition);
+    if (m_armPosition == armPosition.START)
+      rotations = -3;
+    if (m_armPosition == armPosition.INTAKE)
+      rotations = -6 + controllerInput * 3.5;
+    if (m_armPosition == armPosition.LOW)
+      rotations = -15;
+    if (m_armPosition == armPosition.HIGH)
+      rotations = -17;
+    if (m_armPosition == armPosition.EXTRA_HIGH)
+      rotations = -20;
+    
+    SmartDashboard.putNumber("ROTATIONS", rotations);
 
     // if PID coefficients on SmartDashboard have changed, write new values to controller
     if((p != kP)) { m_armController.setP(p); kP = p; }
@@ -152,39 +157,18 @@ public class Arm extends SubsystemBase {
     SmartDashboard.putNumber("SetPoint", rotations);
     SmartDashboard.putNumber("ProcessVariable", m_encoder.getPosition());
 
-    }
     
     SmartDashboard.putNumber("Spool Position", getPositionDegrees());
     SmartDashboard.putNumber("Target Position", m_targetSpoolAngle);
     SmartDashboard.putNumber("Spool Position Rad", Units.degreesToRadians(getPositionDegrees()));
 
     SmartDashboard.putNumber("m_openLoopPower", m_openLoopPower);
-      if (Math.abs(m_openLoopPower) > 0.25) {
-        m_spoolSRX.set((m_openLoopPower > 0 ? 1 : -1) * 0.8);
+      if (Math.abs(m_openLoopPower) > 0.25 && (!(m_armPosition == armPosition.START && m_openLoopPower > 0))) {
+        m_spoolSRX.set((m_openLoopPower > 0 ? 1 : -1) * 0.9);
       } else {
         m_spoolSRX.set(0);
       }
 
-    m_spoolSRX.set(TalonSRXControlMode.Position, MagEncoderUtil.nativeUnitsToDistance(0.1, 1, 30));
-
-    switch (m_armPosition) {
-      case START:
-        this.setAngle(0);
-        m_spoolPosition = 0;
-        break;
-      case INTAKE:
-        this.setAngle(10);
-        m_spoolPosition = 0.1;
-        break;
-      case LOW:
-        this.setAngle(15);
-        m_spoolPosition = 0.15;
-        break;
-      case HIGH:
-        this.setAngle(22);
-        m_spoolPosition = 0.225;
-        break;
-    }
   }
 
   public CommandBase setAngle(double rotation) {
@@ -204,25 +188,43 @@ public class Arm extends SubsystemBase {
   public CommandBase increaseArmAngle() {
     return runOnce(
         () -> {
-          if (m_armPosition == armPosition.START)
-            m_armPosition = armPosition.INTAKE;
-          else if (m_armPosition == armPosition.INTAKE)
-            m_armPosition = armPosition.LOW;
-          else if (m_armPosition == armPosition.LOW)
+          if (m_armPosition == armPosition.HIGH)
+            m_armPosition = armPosition.EXTRA_HIGH;
+          if (m_armPosition == armPosition.LOW)
             m_armPosition = armPosition.HIGH;
+          if (m_armPosition == armPosition.INTAKE)
+            m_armPosition = armPosition.LOW;
+          if (m_armPosition == armPosition.START) {
+            GrabberConstants.isStart = 1;
+            m_armPosition = armPosition.INTAKE;}
         });
   }
 
   public CommandBase decreaseArmAngle() {
     return runOnce(
         () -> {
+          if (m_armPosition == armPosition.INTAKE) {
+            GrabberConstants.isStart = 0;
+            m_armPosition = armPosition.START;}
+          if (m_armPosition == armPosition.LOW)
+            m_armPosition = armPosition.INTAKE;
           if (m_armPosition == armPosition.HIGH)
             m_armPosition = armPosition.LOW;
-          else if (m_armPosition == armPosition.LOW)
-            m_armPosition = armPosition.INTAKE;
-          else if (m_armPosition == armPosition.INTAKE)
+          if (m_armPosition == armPosition.EXTRA_HIGH)
+            m_armPosition = armPosition.HIGH;
+        });
+  }
+
+  public CommandBase resetArmAngle() {
+    return runOnce(
+        () -> {
+          if (m_spoolSRX.getSelectedSensorPosition() < .05)
             m_armPosition = armPosition.START;
         });
+  }
+
+  public void manualIntake(double input) {
+      controllerInput = input;
   }
 
   @Override
