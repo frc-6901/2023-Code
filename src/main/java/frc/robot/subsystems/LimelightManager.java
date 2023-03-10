@@ -10,6 +10,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.LimelightConstants;
 //import frc.utils.InterpolatingDouble;
@@ -27,12 +28,18 @@ public class LimelightManager extends SubsystemBase {
   /** Creates a new LimelightManager. */
   public LimelightManager() {}
 
-  public void turnOnLED() {
-    lightState.setNumber(3);
+  public CommandBase turnOnLED() {
+    return runOnce(
+      () -> {
+        lightState.setNumber(3);
+      });
   }
 
-  public void turnOffLED() {
-    lightState.setNumber(1);
+  public CommandBase turnOffLED() {
+    return runOnce(
+      () -> {
+        lightState.setNumber(1);
+      });
   }
 
   /**
@@ -72,11 +79,18 @@ public class LimelightManager extends SubsystemBase {
     }
   }
 
+  public CommandBase limelightIsGood() {
+    return runOnce(
+        () -> {
+          LimelightConstants.targetAcquired = true;
+        });
+  }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
     m_targetVerticalAngle = ty.getDouble(0.0);
-    m_targetHorizontalError = tx.getDouble(0.0);
+    m_targetHorizontalError = tx.getDouble(0.0) + 8;
     SmartDashboard.putNumber("LL DIst", getDistance());
   }
 }

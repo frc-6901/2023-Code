@@ -131,15 +131,15 @@ public class Arm extends SubsystemBase {
     double rotations = SmartDashboard.getNumber("Set Rotations", 0);
 
     if (m_armPosition == armPosition.START)
-      rotations = -3;
-    if (m_armPosition == armPosition.INTAKE)
-      rotations = -6 + controllerInput * 3.5;
+      rotations = -0.7 + controllerInput * 2;
     if (m_armPosition == armPosition.LOW)
-      rotations = -15;
+      rotations = -6;
+    if (m_armPosition == armPosition.MID)
+      rotations = -13.5;
     if (m_armPosition == armPosition.HIGH)
       rotations = -17;
     if (m_armPosition == armPosition.EXTRA_HIGH)
-      rotations = -20;
+      rotations = -21;
     
     SmartDashboard.putNumber("ROTATIONS", rotations);
 
@@ -163,8 +163,8 @@ public class Arm extends SubsystemBase {
     SmartDashboard.putNumber("Spool Position Rad", Units.degreesToRadians(getPositionDegrees()));
 
     SmartDashboard.putNumber("m_openLoopPower", m_openLoopPower);
-      if (Math.abs(m_openLoopPower) > 0.25 && (!(m_armPosition == armPosition.START && m_openLoopPower > 0))) {
-        m_spoolSRX.set((m_openLoopPower > 0 ? 1 : -1) * 0.9);
+      if (Math.abs(m_openLoopPower) > 0.25) {
+        m_spoolSRX.set((m_openLoopPower > 0 ? 1 : -1) * 0.8);
       } else {
         m_spoolSRX.set(0);
       }
@@ -190,26 +190,25 @@ public class Arm extends SubsystemBase {
         () -> {
           if (m_armPosition == armPosition.HIGH)
             m_armPosition = armPosition.EXTRA_HIGH;
-          if (m_armPosition == armPosition.LOW)
+          if (m_armPosition == armPosition.MID)
             m_armPosition = armPosition.HIGH;
-          if (m_armPosition == armPosition.INTAKE)
-            m_armPosition = armPosition.LOW;
+          if (m_armPosition == armPosition.LOW)
+            m_armPosition = armPosition.MID;
           if (m_armPosition == armPosition.START) {
-            GrabberConstants.isStart = 1;
-            m_armPosition = armPosition.INTAKE;}
+            m_armPosition = armPosition.LOW;}
         });
   }
 
   public CommandBase decreaseArmAngle() {
     return runOnce(
         () -> {
-          if (m_armPosition == armPosition.INTAKE) {
+          if (m_armPosition == armPosition.LOW) {
             GrabberConstants.isStart = 0;
             m_armPosition = armPosition.START;}
-          if (m_armPosition == armPosition.LOW)
-            m_armPosition = armPosition.INTAKE;
-          if (m_armPosition == armPosition.HIGH)
+          if (m_armPosition == armPosition.MID)
             m_armPosition = armPosition.LOW;
+          if (m_armPosition == armPosition.HIGH)
+            m_armPosition = armPosition.MID;
           if (m_armPosition == armPosition.EXTRA_HIGH)
             m_armPosition = armPosition.HIGH;
         });

@@ -131,12 +131,12 @@ public final class Constants {
     public static final double kMinOutput = -1;
 
     public static final int kSpoolMotorPort = 11;
-    public static final double kSpoolMotorForwardLimit = 0.227;
+    public static final double kSpoolMotorForwardLimit = 0.225;
     public static final double kSpoolMotorReverseLimit = 0;
     public static final double kInitialSpoolPosition = 0;
 
     public enum armPosition {
-      START, INTAKE, LOW, HIGH, EXTRA_HIGH;
+      START, LOW, MID, HIGH, EXTRA_HIGH;
     }
   }
 
@@ -206,11 +206,12 @@ public final class Constants {
   }
 
   public static final class LimelightConstants {
+    public static boolean targetAcquired = false;
     public static final double kLensHeightMeters = Units.inchesToMeters(27.299450);
     public static final double kMountAngleDegrees = 50.000000;
     public static final double kTargetHeightMeters = Units.inchesToMeters(104.0 - 1.0);
 
-    public static final double kLimelightP = 0.45;
+    public static final double kLimelightP = 0.28;
     public static final double kLimelightD = 0.0;
 
     public static InterpolatingTreeMap<InterpolatingDouble, InterpolatingDouble> kShooterRPMMap =

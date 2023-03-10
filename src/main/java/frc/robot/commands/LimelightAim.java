@@ -20,12 +20,12 @@ public class LimelightAim extends PIDCommand {
         // The controller that the command will use
         new PIDController(LimelightConstants.kLimelightP, 0, LimelightConstants.kLimelightD),
         // This should return the measurement
-        () -> limelight.getHorizontalErrorDegrees(),
+        () -> limelight.getHorizontalErrorDegrees() - 8,
         // This should return the setpoint (can also be a constant)
-        () -> 0.0,
+        () -> 0,
         // This uses the output
         output -> {
-          driveSubsystem.setInvertedX(output);
+          driveSubsystem.drive(0, output / 16, 0, false, false);
         });
     // Use addRequirements() here to declare subsystem dependencies.
     addRequirements(driveSubsystem);
@@ -37,6 +37,6 @@ public class LimelightAim extends PIDCommand {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return false;
+    return LimelightConstants.targetAcquired;
   }
 }

@@ -39,7 +39,6 @@ public class PneumaticGrabber extends SubsystemBase {
   public CommandBase closeGrabber() {
     return runOnce(
         () -> {
-          if (GrabberConstants.isStart != 0)
             m_grabberSolenoid.set(kForward);
         });
   }
