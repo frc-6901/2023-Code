@@ -6,6 +6,7 @@ package frc.robot;
 
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.commands.ExampleCommand;
+import frc.robot.commands.GyroBalance;
 import frc.robot.commands.LimelightAim;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.ExampleSubsystem;
@@ -113,7 +114,7 @@ public class RobotContainer {
     m_operatorController.leftBumper().onTrue(m_arm.increaseArmAngle());
     m_operatorController.rightBumper().onTrue(m_arm.decreaseArmAngle());
     m_operatorController.back().onTrue(m_arm.resetArmAngle());
-    m_operatorController.x().onTrue(midConeScorer);
+    m_operatorController.x().onTrue(new GyroBalance(m_robotDrive.getGyro(), m_robotDrive));
     m_operatorController.leftTrigger().onTrue(m_pneumaticGrabber.openGrabber());
     m_operatorController.rightTrigger().onTrue(m_pneumaticGrabber.closeGrabber());
     
