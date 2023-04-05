@@ -107,16 +107,17 @@ public class RobotContainer {
     new Trigger(m_exampleSubsystem::exampleCondition)
         .onTrue(new ExampleCommand(m_exampleSubsystem));
     
-    m_operatorController.y().onTrue(m_arm.set(0.5));
-    m_operatorController.y().onFalse(m_arm.set(0));
-    m_operatorController.a().onTrue(m_arm.set(-0.5));
-    m_operatorController.a().onFalse(m_arm.set(0));
     m_operatorController.leftBumper().onTrue(m_arm.increaseArmAngle());
     m_operatorController.rightBumper().onTrue(m_arm.decreaseArmAngle());
-    m_operatorController.back().onTrue(m_arm.resetArmAngle());
     m_operatorController.x().onTrue(new GyroBalance(m_robotDrive.getGyro(), m_robotDrive));
     m_operatorController.leftTrigger().onTrue(m_pneumaticGrabber.openGrabber());
     m_operatorController.rightTrigger().onTrue(m_pneumaticGrabber.closeGrabber());
+    
+    // Controller spool shit
+    m_operatorController.y().onTrue(m_arm.setSpoolSpeed(0.05));
+    m_operatorController.y().onFalse(m_arm.setSpoolSpeed(0));
+    m_operatorController.a().onTrue(m_arm.setSpoolSpeed(-0.05));
+    m_operatorController.a().onFalse(m_arm.setSpoolSpeed(0));
     
     m_navigatorController.y().onTrue(m_robotDrive.zeroHeading());
     m_navigatorController.rightTrigger().onTrue(m_robotDrive.setSpeedPercent(0.55));
